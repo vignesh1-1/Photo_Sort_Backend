@@ -14,7 +14,7 @@ from bson import ObjectId
 
 load_dotenv()
 
-MONGO_URI = os.getenv("mongodb+srv://technglobalhosting_db_user:RhbVhLnehkcVIBa1@miniproject.pg2mobb.mongodb.net/?appName=miniproject", "mongodb://localhost:27017")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://technglobalhosting_db_user:RhbVhLnehkcVIBa1@miniproject.pg2mobb.mongodb.net/?appName=miniproject")
 DB_NAME = os.getenv("DB_NAME", "photosort_db")
 
 client = AsyncIOMotorClient(MONGO_URI)
