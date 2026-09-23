@@ -2,46 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhotoSort - Automated Photo Quality Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PhotoSort - Automated Photo Quality Detection & Culling Suite</title>
+  
+  <!-- Web Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Client-Side ZIP Packaging & File Download Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
   <style>
+    /* ==========================================================================
+       CSS DESIGN TOKENS & SYSTEM VARIABLES
+       ========================================================================== */
     :root {
+      /* Background Canvas & Surface Colors */
       --bg-canvas: #F8FAFC;
       --bg-surface: #FFFFFF;
       --bg-subtle: #F1F5F9;
       --border-subtle: #E2E8F0;
       --border-strong: #CBD5E1;
+      
+      /* Typography Colors */
       --text-primary: #0F172A;
       --text-secondary: #475569;
       --text-muted: #94A3B8;
       
+      /* Brand Accent Colors */
       --accent-primary: #2563EB;
       --accent-soft: #EFF6FF;
       
+      /* Status Category Colors (Select / Good) */
       --good-color: #059669;
       --good-bg: #ECFDF5;
       --good-border: #A7F3D0;
       
+      /* Status Category Colors (Review / Warning) */
       --review-color: #D97706;
       --review-bg: #FFFBEB;
       --review-border: #FDE68A;
       
+      /* Status Category Colors (Poor / Danger) */
       --poor-color: #DC2626;
       --poor-bg: #FEF2F2;
       --poor-border: #FECACA;
 
+      /* UI Geometry & Shadows */
       --radius-sm: 8px;
       --radius-md: 14px;
       --radius-lg: 20px;
       --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
       --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.06);
-      --shadow-float: 0 12px 36px rgba(15, 23, 42, 0.1);
-      --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      --shadow-float: 0 16px 40px rgba(15, 23, 42, 0.14);
+      --transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
+    /* Universal Reset & Base Styles */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -54,68 +73,76 @@
       background-color: var(--bg-canvas);
       color: var(--text-primary);
       min-height: 100vh;
-      padding-bottom: 96px;
+      padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
       overflow-x: hidden;
     }
 
+    /* Sticky Navigation Header */
     header {
       background: var(--bg-surface);
       border-bottom: 1px solid var(--border-subtle);
-      padding: 1rem 1.5rem;
+      padding: 0.85rem 1.25rem;
       position: sticky;
       top: 0;
       z-index: 30;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 0.75rem;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.65rem;
+      min-width: 0;
     }
 
     .brand-icon {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       background: linear-gradient(135deg, #2563EB, #4F46E5);
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #FFFFFF;
+      flex-shrink: 0;
       box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
     }
 
     .brand-text h1 {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 700;
       letter-spacing: -0.02em;
     }
 
     .brand-text p {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--text-secondary);
     }
 
     .header-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.4rem;
+      flex-shrink: 0;
     }
 
+    /* Reusable Button Styles */
     .btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
-      padding: 0.55rem 1rem;
-      font-size: 0.82rem;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 0.5rem 0.85rem;
+      font-size: 0.78rem;
       font-weight: 600;
       border-radius: var(--radius-sm);
       border: 1px solid transparent;
       cursor: pointer;
       transition: var(--transition);
       text-decoration: none;
+      white-space: nowrap;
     }
 
     .btn-secondary {
@@ -137,12 +164,22 @@
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
     }
 
+    .btn-danger {
+      background: var(--poor-bg);
+      border-color: var(--poor-border);
+      color: var(--poor-color);
+    }
+    .btn-danger:hover {
+      background: #FEE2E2;
+    }
+
+    /* View Container Tabs */
     .view-container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 1.5rem;
+      padding: 1.25rem 1rem;
       display: none;
-      animation: fadeIn 0.3s ease-out forwards;
+      animation: fadeIn 0.25s ease-out forwards;
     }
 
     .view-container.active {
@@ -150,15 +187,47 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Floating Batch Action Bar */
+    .batch-action-bar {
+      position: fixed;
+      top: 4.2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: var(--text-primary);
+      color: #ffffff;
+      padding: 0.6rem 1.25rem;
+      border-radius: 40px;
+      box-shadow: var(--shadow-float);
+      z-index: 35;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition);
+    }
+    .batch-action-bar.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .batch-count-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding-right: 0.5rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Drag and Drop Import Zone */
     .upload-box {
       border: 2px dashed var(--border-strong);
       background: var(--bg-surface);
       border-radius: var(--radius-lg);
-      padding: 3.5rem 1.5rem;
+      padding: 2.75rem 1.25rem;
       text-align: center;
       cursor: pointer;
       transition: var(--transition);
@@ -166,12 +235,11 @@
     .upload-box:hover, .upload-box.drag-over {
       border-color: var(--accent-primary);
       background: var(--accent-soft);
-      transform: scale(0.995);
     }
     .upload-icon {
-      width: 58px;
-      height: 58px;
-      margin: 0 auto 1.25rem;
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 1rem;
       border-radius: 50%;
       background: var(--accent-soft);
       color: var(--accent-primary);
@@ -180,27 +248,28 @@
       justify-content: center;
     }
 
+    /* Methodology Feature Cards Grid */
     .cv-pipeline-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-      margin-top: 1.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.85rem;
+      margin-top: 1.5rem;
     }
 
     .pipeline-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 1.15rem;
+      padding: 1rem;
       display: flex;
-      gap: 0.85rem;
+      gap: 0.75rem;
       align-items: flex-start;
       box-shadow: var(--shadow-sm);
     }
 
     .pipeline-badge {
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: var(--radius-sm);
       background: var(--accent-soft);
       color: var(--accent-primary);
@@ -211,61 +280,83 @@
     }
 
     .pipeline-card h4 {
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       font-weight: 600;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.2rem;
     }
     .pipeline-card p {
-      font-size: 0.75rem;
+      font-size: 0.73rem;
       color: var(--text-secondary);
-      line-height: 1.4;
+      line-height: 1.35;
+    }
+
+    /* Workspace Toolbar & Metrics */
+    .workspace-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
     }
 
     .metrics-bar {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    @media (min-width: 640px) {
+      .metrics-bar {
+        grid-template-columns: repeat(4, 1fr);
+      }
     }
 
     .metric-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
-      padding: 1rem 1.2rem;
+      padding: 0.85rem 1rem;
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.2rem;
       box-shadow: var(--shadow-sm);
     }
 
     .metric-card span {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--text-secondary);
       font-weight: 600;
     }
     .metric-card strong {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 700;
     }
 
     .filter-pills {
       display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.25rem;
-      flex-wrap: wrap;
+      gap: 0.4rem;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .filter-pills::-webkit-scrollbar {
+      display: none;
     }
 
     .pill {
-      padding: 0.45rem 1rem;
+      padding: 0.4rem 0.85rem;
       border-radius: 20px;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       font-weight: 600;
       border: 1px solid var(--border-subtle);
       background: var(--bg-surface);
       color: var(--text-secondary);
       cursor: pointer;
       transition: var(--transition);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .pill.active {
@@ -274,10 +365,28 @@
       border-color: var(--text-primary);
     }
 
+    .sort-select {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.45rem 0.75rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      outline: none;
+    }
+
+    /* Photo Grid & Cards */
     .photo-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 1.25rem;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+
+    @media (max-width: 480px) {
+      .photo-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .photo-card {
@@ -289,17 +398,39 @@
       transition: var(--transition);
       display: flex;
       flex-direction: column;
+      position: relative;
     }
 
-    .photo-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-md);
-      border-color: var(--border-strong);
+    .photo-card.selected {
+      border: 2px solid var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .card-checkbox {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid var(--border-strong);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+      transition: var(--transition);
+    }
+    .photo-card.selected .card-checkbox {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: #ffffff;
     }
 
     .photo-thumb-wrap {
       width: 100%;
-      height: 190px;
+      height: 200px;
       position: relative;
       background: var(--bg-subtle);
       cursor: pointer;
@@ -313,11 +444,11 @@
 
     .score-badge {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 0.25rem 0.6rem;
+      top: 8px;
+      right: 8px;
+      padding: 0.25rem 0.55rem;
       border-radius: 20px;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       font-weight: 700;
       box-shadow: 0 2px 6px rgba(0,0,0,0.12);
     }
@@ -325,11 +456,34 @@
     .score-review { background: var(--review-bg); color: var(--review-color); border: 1px solid var(--review-border); }
     .score-poor { background: var(--poor-bg); color: var(--poor-color); border: 1px solid var(--poor-border); }
 
+    .card-delete-icon-btn {
+      position: absolute;
+      top: 8px;
+      left: 36px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      color: var(--poor-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      z-index: 5;
+    }
+    .card-delete-icon-btn:hover {
+      background: var(--poor-color);
+      color: #ffffff;
+    }
+
     .photo-meta {
       padding: 0.85rem;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.4rem;
       flex: 1;
     }
 
@@ -343,13 +497,13 @@
 
     .flags-row {
       display: flex;
-      gap: 0.35rem;
+      gap: 0.3rem;
       flex-wrap: wrap;
     }
 
     .flag-tag {
-      font-size: 0.68rem;
-      padding: 0.2rem 0.45rem;
+      font-size: 0.65rem;
+      padding: 0.2rem 0.4rem;
       border-radius: 4px;
       background: var(--bg-subtle);
       color: var(--text-secondary);
@@ -358,6 +512,10 @@
     .flag-tag.alert {
       background: var(--poor-bg);
       color: var(--poor-color);
+    }
+    .flag-tag.duplicate {
+      background: #EDE9FE;
+      color: #6D28D9;
     }
 
     .card-actions {
@@ -368,7 +526,7 @@
 
     .card-action-btn {
       flex: 1;
-      padding: 0.6rem 0.2rem;
+      padding: 0.7rem 0.2rem;
       font-size: 0.74rem;
       font-weight: 600;
       background: transparent;
@@ -376,6 +534,7 @@
       cursor: pointer;
       color: var(--text-secondary);
       transition: background 0.2s;
+      min-height: 42px;
     }
     .card-action-btn:not(:last-child) {
       border-right: 1px solid var(--border-subtle);
@@ -388,29 +547,99 @@
     .card-action-btn.selected-review { color: var(--review-color); background: var(--review-bg); }
     .card-action-btn.selected-poor { color: var(--poor-color); background: var(--poor-bg); }
 
+    /* Modal Framework & Custom Dialogs */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.65);
-      backdrop-filter: blur(5px);
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
       z-index: 100;
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 1.25rem;
+      padding: 1rem;
     }
     .modal-overlay.active {
       display: flex;
     }
+
+    /* Custom Delete Pop-up Modal */
+    .custom-confirm-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow-float);
+      animation: fadeIn 0.2s ease-out;
+    }
+    .confirm-icon-box {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 1.25rem;
+      border-radius: 50%;
+      background: var(--poor-bg);
+      color: var(--poor-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .confirm-actions {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 1.5rem;
+    }
+
+    /* Persistent Upload Progress Modal */
+    .upload-progress-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.5rem;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow-float);
+    }
+
+    .upload-spinner-icon {
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 1.25rem;
+      border-radius: 50%;
+      border: 4px solid var(--accent-soft);
+      border-top-color: var(--accent-primary);
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-bar-container {
+      background: var(--bg-subtle);
+      height: 10px;
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 1.25rem 0 0.75rem;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #2563EB, #4F46E5);
+      border-radius: 20px;
+      transition: width 0.3s ease;
+    }
+
+    /* Detailed Image Inspection Modal */
     .modal-content {
       background: var(--bg-surface);
       border-radius: var(--radius-lg);
-      max-width: 860px;
+      max-width: 900px;
       width: 100%;
-      max-height: 90vh;
+      max-height: 88vh;
       overflow-y: auto;
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
+      grid-template-columns: 1.3fr 1fr;
       box-shadow: var(--shadow-float);
     }
 
@@ -420,22 +649,51 @@
 
     .modal-image-pane {
       background: #000;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 280px;
+      overflow: hidden;
     }
     .modal-image-pane img {
       max-width: 100%;
-      max-height: 70vh;
+      max-height: 65vh;
       object-fit: contain;
     }
 
+    /* Composition Rule of Thirds Grid */
+    .rule-of-thirds-grid {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      border: 1px dashed rgba(255, 255, 255, 0.4);
+    }
+    .rule-of-thirds-grid.active { display: grid; }
+    .rule-of-thirds-grid div {
+      border: 1px dashed rgba(255, 255, 255, 0.35);
+    }
+
+    /* Exposure Clipping Canvas Overlay */
+    #clippingCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      display: none;
+    }
+    #clippingCanvas.active { display: block; }
+
     .modal-details {
-      padding: 1.5rem;
+      padding: 1.25rem;
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 0.85rem;
     }
 
     .modal-header {
@@ -446,7 +704,7 @@
     .modal-close-btn {
       background: none;
       border: none;
-      font-size: 1.4rem;
+      font-size: 1.6rem;
       cursor: pointer;
       color: var(--text-muted);
     }
@@ -454,16 +712,16 @@
     .analysis-meter {
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
+      gap: 0.25rem;
     }
     .meter-label {
       display: flex;
       justify-content: space-between;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 600;
     }
     .meter-bar {
-      height: 7px;
+      height: 6px;
       background: var(--bg-subtle);
       border-radius: 10px;
       overflow: hidden;
@@ -475,83 +733,174 @@
       transition: width 0.4s ease;
     }
 
+    /* Side-by-Side Comparison Modal */
+    .compare-content {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      max-width: 1100px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-float);
+    }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 680px) {
+      .compare-grid { grid-template-columns: 1fr; }
+    }
+    .compare-pane {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .compare-img-box {
+      height: 260px;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .compare-img-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .compare-meta {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    /* High-Contrast Storage Progress Bar (Grey = Available, Blue = Used) */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .stats-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .storage-meter-large {
+      height: 16px;
+      background: #E2E8F0; /* Slate-grey track representing available free storage */
+      border: 1px solid #CBD5E1; /* High contrast outline */
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .storage-meter-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 20px;
+      background: #2563EB; /* Vibrant blue fill representing used memory */
+      transition: width 0.5s ease;
+      min-width: 6px; /* Guarantees small initial usage is clearly visible */
+    }
+
+    /* Floating Navigation Dock */
     .bottom-dock {
       position: fixed;
-      bottom: 1.2rem;
+      bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(14px);
       border: 1px solid rgba(226, 232, 240, 0.9);
       border-radius: 40px;
-      padding: 0.4rem 0.6rem;
+      padding: 0.35rem 0.5rem;
       display: flex;
-      gap: 0.3rem;
+      gap: 0.25rem;
       box-shadow: var(--shadow-float);
       z-index: 40;
+      max-width: calc(100% - 1.5rem);
     }
 
     .dock-tab {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.6rem 1.1rem;
+      gap: 0.45rem;
+      padding: 0.55rem 0.9rem;
       border-radius: 30px;
       border: none;
       background: transparent;
       color: var(--text-secondary);
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
+      white-space: nowrap;
     }
 
-    .dock-tab svg {
-      width: 18px;
-      height: 18px;
-    }
+    .dock-tab svg { width: 17px; height: 17px; flex-shrink: 0; }
+    .dock-tab:hover { background: var(--bg-subtle); color: var(--text-primary); }
+    .dock-tab.active { background: var(--text-primary); color: #ffffff; }
 
-    .dock-tab:hover {
-      background: var(--bg-subtle);
-      color: var(--text-primary);
-    }
-
-    .dock-tab.active {
-      background: var(--text-primary);
-      color: #ffffff;
-    }
-
+    /* Empty State Notice */
     .empty-state {
       text-align: center;
       padding: 3rem 1rem;
       color: var(--text-muted);
     }
 
+    /* Toast Notification Banner */
     .toast {
       position: fixed;
-      top: 1.5rem;
-      right: 1.5rem;
+      top: 1rem;
+      right: 1rem;
+      left: 1rem;
+      max-width: 380px;
+      margin: 0 auto;
       background: var(--text-primary);
       color: #ffffff;
-      padding: 0.75rem 1.25rem;
+      padding: 0.75rem 1.15rem;
       border-radius: var(--radius-sm);
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 500;
       box-shadow: var(--shadow-float);
       opacity: 0;
-      transform: translateY(-10px);
+      transform: translateY(-8px);
       transition: all 0.3s ease;
       z-index: 110;
       pointer-events: none;
+      text-align: center;
     }
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .toast.show { opacity: 1; transform: translateY(0); }
   </style>
 </head>
 <body>
 
+  <!-- FLOATING BATCH SELECTION HEADER -->
+  <div class="batch-action-bar" id="batchActionBar">
+    <span class="batch-count-tag" id="batchCountTag">0 Selected</span>
+    <button class="btn btn-secondary" style="background: rgba(255,255,255,0.15); color: #fff; border: none;" onclick="batchSetClassification('good')">Select</button>
+    <button class="btn btn-secondary" style="background: rgba(255,255,255,0.15); color: #fff; border: none;" onclick="batchSetClassification('review')">Review</button>
+    <button class="btn btn-secondary" style="background: rgba(255,255,255,0.15); color: #fff; border: none;" onclick="batchSetClassification('poor')">Poor</button>
+    <button class="btn btn-secondary" id="compareBatchBtn" style="background: rgba(255,255,255,0.15); color: #fff; border: none; display: none;" onclick="openSideBySideCompare()">Compare</button>
+    <button class="btn btn-danger" style="color: #fff; background: var(--poor-color); border: none;" onclick="promptBatchDelete()">Delete</button>
+    <button class="btn btn-secondary" style="background: transparent; color: #cbd5e1; border: none; padding: 0.2rem;" onclick="clearBatchSelection()">&times;</button>
+  </div>
+
+  <!-- APPLICATION HEADER -->
   <header>
     <div class="brand">
       <div class="brand-icon">
@@ -561,172 +910,354 @@
       </div>
       <div class="brand-text">
         <h1>PhotoSort</h1>
-        <p>Automated Photo Quality Detection & Organization</p>
+        <p>CV Quality Detection & Culling Suite</p>
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn btn-secondary" onclick="demoLoadPhotos()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-        </svg>
-        Load Demo Batch
+      <!-- Loads mock samples for rapid demonstrations -->
+      <button class="btn btn-secondary" onclick="demoLoadPhotos()" title="Load Demo Batch">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>Demo</span>
       </button>
-      <button class="btn btn-primary" onclick="exportSelects()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-        </svg>
-        Export Selects
+      <!-- Generates client-side ZIP package of all curated 'Select' images -->
+      <button class="btn btn-primary" onclick="exportSelectsZip()" title="Export Curated ZIP Package">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <span>Export ZIP</span>
       </button>
     </div>
   </header>
 
   <div id="toast" class="toast">Action completed</div>
+  
+  <!-- Hidden native file input element -->
   <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
 
+  <!-- CUSTOM ANIMATED DELETE CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="confirmDeleteModal">
+    <div class="custom-confirm-card">
+      <div class="confirm-icon-box">
+        <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </div>
+      <h3 id="confirmModalTitle" style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem;">Delete Photograph?</h3>
+      <p id="confirmModalMessage" style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.45;">
+        Are you sure you want to delete this photo from MongoDB Atlas? This action cannot be reversed.
+      </p>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" style="flex: 1;" onclick="closeConfirmModal()">Cancel</button>
+        <button class="btn btn-danger" style="flex: 1;" id="confirmModalDeleteBtn" onclick="executeConfirmedDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERSISTENT UPLOAD PROGRESS MODAL -->
+  <div class="modal-overlay" id="uploadProgressModal">
+    <div class="upload-progress-card">
+      <div class="upload-spinner-icon"></div>
+      <h3 id="uploadModalTitle" style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.35rem;">Uploading to MongoDB Atlas...</h3>
+      <p id="uploadModalSub" style="font-size: 0.78rem; color: var(--text-secondary);">Processing and compressing images...</p>
+      
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="uploadProgressBar"></div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-top: 0.4rem;">
+        <span id="uploadProgressCount">0 / 0 images</span>
+        <span id="uploadProgressPercent">0%</span>
+      </div>
+      <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 1rem;">Please do not refresh while the storage pipeline commits.</p>
+    </div>
+  </div>
+
+  <!-- VIEW 1: IMPORT TAB -->
   <main id="uploadView" class="view-container active">
     <div class="upload-box" id="dropArea" onclick="document.getElementById('fileInput').click()">
       <div class="upload-icon">
-        <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
         </svg>
       </div>
-      <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem;">Drop your photo collection or folder here</h3>
-      <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 480px; margin: 0 auto;">
-        PhotoSort inspects sharpness, exposure levels, and resolution to classify images into Good/Select, Review, and Poor Quality.
+      <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.35rem;">Drop photos or tap to browse</h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); max-width: 440px; margin: 0 auto;">
+        Inspects sharpness, exposure levels, eye-blinks, and duplicate bursts with WebP compressed cloud sync.
       </p>
     </div>
 
+    <!-- Feature Showcase Cards -->
     <div class="cv-pipeline-grid">
       <div class="pipeline-card">
         <div class="pipeline-badge">
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
         </div>
         <div>
           <h4>Blur Detection</h4>
-          <p>Laplacian variance edge filtering isolates motion blur and focal misses.</p>
+          <p>Laplacian variance edge filtering isolates focal misses.</p>
         </div>
       </div>
 
       <div class="pipeline-card">
         <div class="pipeline-badge">
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         </div>
         <div>
-          <h4>Exposure Levels</h4>
-          <p>Luminance histogram distribution catches blown highlights and deep underexposure.</p>
+          <h4>Exposure Clipping</h4>
+          <p>Highlights blown whites and underexposed dark shadows.</p>
         </div>
       </div>
 
       <div class="pipeline-card">
         <div class="pipeline-badge">
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
         <div>
-          <h4>Facial Analysis</h4>
-          <p>Flags closed eyes and mid-blink expressions via landmark evaluation.</p>
+          <h4>Haar Blink Analysis</h4>
+          <p>Flags closed eyes and mid-blink portraits via eye cascades.</p>
         </div>
       </div>
 
       <div class="pipeline-card">
         <div class="pipeline-badge">
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
         </div>
         <div>
-          <h4>Duplicate Detection</h4>
-          <p>Perceptual hashing (pHash) groups rapid bursts to highlight only the crispest frame.</p>
+          <h4>dHash Burst Curating</h4>
+          <p>Perceptual hashing groups rapid bursts to highlight hero picks.</p>
         </div>
       </div>
     </div>
   </main>
 
+  <!-- VIEW 2: WORKSPACE TAB -->
   <section id="cullingView" class="view-container">
+    <!-- Real-time metrics overview banner -->
     <div class="metrics-bar">
       <div class="metric-card">
         <span>Total Processed</span>
         <strong id="statTotal">0</strong>
       </div>
       <div class="metric-card" style="border-left: 3px solid var(--good-color)">
-        <span>Good / Select</span>
+        <span>Selects</span>
         <strong id="statGood" style="color: var(--good-color)">0</strong>
       </div>
       <div class="metric-card" style="border-left: 3px solid var(--review-color)">
-        <span>Needs Review</span>
+        <span>Review</span>
         <strong id="statReview" style="color: var(--review-color)">0</strong>
       </div>
       <div class="metric-card" style="border-left: 3px solid var(--poor-color)">
-        <span>Poor Quality</span>
+        <span>Poor</span>
         <strong id="statPoor" style="color: var(--poor-color)">0</strong>
       </div>
     </div>
 
-    <div class="filter-pills">
-      <button class="pill active" onclick="setCategoryFilter('all')">All Photos (<span id="pillAllCount">0</span>)</button>
-      <button class="pill" onclick="setCategoryFilter('good')">Selects (<span id="pillGoodCount">0</span>)</button>
-      <button class="pill" onclick="setCategoryFilter('review')">Review (<span id="pillReviewCount">0</span>)</button>
-      <button class="pill" onclick="setCategoryFilter('poor')">Poor Quality (<span id="pillPoorCount">0</span>)</button>
+    <!-- Workspace Filtering & Sorting Toolbar -->
+    <div class="workspace-toolbar">
+      <div class="filter-pills">
+        <button class="pill active" onclick="setCategoryFilter('all')">All (<span id="pillAllCount">0</span>)</button>
+        <button class="pill" onclick="setCategoryFilter('good')">Selects (<span id="pillGoodCount">0</span>)</button>
+        <button class="pill" onclick="setCategoryFilter('review')">Review (<span id="pillReviewCount">0</span>)</button>
+        <button class="pill" onclick="setCategoryFilter('poor')">Poor (<span id="pillPoorCount">0</span>)</button>
+        <button class="pill" onclick="setCategoryFilter('duplicates')">Duplicates (<span id="pillDupCount">0</span>)</button>
+      </div>
+      <div>
+        <select class="sort-select" id="sortSelect" onchange="handleSortChange(this.value)">
+          <option value="newest">Sort: Newest First</option>
+          <option value="oldest">Sort: Oldest First</option>
+          <option value="score_desc">Sort: Highest Score</option>
+          <option value="sharpness_desc">Sort: Sharpest First</option>
+          <option value="size_desc">Sort: Largest File Size</option>
+        </select>
+      </div>
     </div>
 
+    <!-- Dynamic Photo Gallery Grid -->
     <div class="photo-grid" id="photoGallery"></div>
+    
     <div id="emptyGallery" class="empty-state" style="display: none;">
-      <p>No photos match the selected category.</p>
+      <p>No photos found matching this filter.</p>
     </div>
   </section>
 
+  <!-- VIEW 3: STATS & STORAGE MONITOR TAB -->
+  <section id="statsView" class="view-container">
+    <div style="background: var(--bg-surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); margin-bottom: 1.25rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h2 style="font-size: 1.15rem; font-weight: 700;">MongoDB Atlas Storage & Analytics</h2>
+          <p style="color: var(--text-secondary); font-size: 0.78rem;">Live cluster quota tracking & WebP compression efficiency</p>
+        </div>
+        <button class="btn btn-secondary" onclick="loadBackendStats()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh Stats
+        </button>
+      </div>
+
+      <!-- High-Contrast Atlas Memory Bar (Grey track = Free Space, Blue bar = Used Space) -->
+      <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.6rem;">
+          <span>Atlas Quota Allocation (M0 Free Tier)</span>
+          <span id="storageLabelUsed">0.00 MB / 512 MB (0%)</span>
+        </div>
+        <div class="storage-meter-large">
+          <div class="storage-meter-fill" id="storageMeterFill"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.6rem;">
+          <span>Used: <strong id="storageUsedMbText">0 MB</strong></span>
+          <span>Remaining: <strong id="storageRemainingMbText" style="color: var(--good-color);">512 MB Free</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Dashboard Cards -->
+    <div class="stats-grid">
+      <div class="stats-card">
+        <h4 style="font-size: 0.88rem; font-weight: 700;">Classification Distribution</h4>
+        <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.2rem;">
+              <span>Selects (Good)</span>
+              <strong id="statGoodPercent">0%</strong>
+            </div>
+            <div class="meter-bar"><div id="statGoodBar" class="meter-fill" style="background: var(--good-color); width: 0%;"></div></div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.2rem;">
+              <span>Needs Review</span>
+              <strong id="statReviewPercent">0%</strong>
+            </div>
+            <div class="meter-bar"><div id="statReviewBar" class="meter-fill" style="background: var(--review-color); width: 0%;"></div></div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.2rem;">
+              <span>Poor Quality</span>
+              <strong id="statPoorPercent">0%</strong>
+            </div>
+            <div class="meter-bar"><div id="statPoorBar" class="meter-fill" style="background: var(--poor-color); width: 0%;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-card">
+        <h4 style="font-size: 0.88rem; font-weight: 700;">Performance Benchmarks</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div style="background: var(--bg-subtle); padding: 0.75rem; border-radius: var(--radius-sm);">
+            <span style="font-size: 0.7rem; color: var(--text-secondary); display: block;">Avg Quality Score</span>
+            <strong id="statAvgScore" style="font-size: 1.25rem;">0 / 100</strong>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 0.75rem; border-radius: var(--radius-sm);">
+            <span style="font-size: 0.7rem; color: var(--text-secondary); display: block;">Avg Sharpness</span>
+            <strong id="statAvgSharpness" style="font-size: 1.25rem;">0</strong>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 0.75rem; border-radius: var(--radius-sm);">
+            <span style="font-size: 0.7rem; color: var(--text-secondary); display: block;">Avg Exposure</span>
+            <strong id="statAvgExposure" style="font-size: 1.25rem;">0 Lum</strong>
+          </div>
+          <div style="background: var(--bg-subtle); padding: 0.75rem; border-radius: var(--radius-sm);">
+            <span style="font-size: 0.7rem; color: var(--text-secondary); display: block;">Avg Raw Size</span>
+            <strong id="statAvgFileSize" style="font-size: 1.25rem;">0 KB</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW 4: SYSTEM SPECIFICATIONS TAB -->
   <section id="methodologyView" class="view-container">
-    <div style="background: var(--bg-surface); padding: 2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);">
-      <h2 style="font-size: 1.25rem; margin-bottom: 0.4rem;">Methodology & System Pipeline</h2>
-      <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5;">
-        Automated photo quality scoring based on computer vision processing rules.
-      </p>
+    <div style="background: var(--bg-surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 1.25rem;">
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.35rem;">System Specifications & Engineering Pipeline</h2>
+        <p style="color: var(--text-secondary); font-size: 0.8rem; line-height: 1.45;">
+          PhotoSort combines computer vision, perceptual hashing, and client-server synchronization to automate photography culling.
+        </p>
+      </div>
 
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
-        <div style="padding: 1rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
-          <h4 style="font-size: 0.92rem; margin-bottom: 0.25rem;">1. Sharpness / Focus (Laplacian Variance)</h4>
-          <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
-            Convolves the image with a standard 3x3 Laplacian edge-detection kernel to compute pixel intensity variances. High variance designates sharp focus, while low variance indicates blur.
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+        <div style="padding: 1rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-canvas);">
+          <h4 style="font-size: 0.86rem; font-weight: 700; margin-bottom: 0.35rem;">1. Laplacian Variance Blur Detection</h4>
+          <p style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">
+            Convolves the image with a 3x3 Laplacian edge-detection kernel to compute pixel intensity variances. Sharp focus produces high second-derivative edge variance (>120), whereas lens defocus or motion blur flattens high-frequency gradients (&lt;60).
           </p>
         </div>
 
-        <div style="padding: 1rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
-          <h4 style="font-size: 0.92rem; margin-bottom: 0.25rem;">2. Luminance & Exposure Histogram</h4>
-          <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
-            Computes brightness distribution to identify underexposed shadows (&lt;45) or clipped highlights (&gt;210).
+        <div style="padding: 1rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-canvas);">
+          <h4 style="font-size: 0.86rem; font-weight: 700; margin-bottom: 0.35rem;">2. Luminance Histogram & Clipping Mask</h4>
+          <p style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">
+            Computes pixel brightness across the 8-bit luminance spectrum. Underexposed shadows are flagged at mean values &lt;45, while clipped highlight overexposure is flagged at &gt;215. The in-modal clipping mask marks pure highlights in red and pure shadows in blue.
           </p>
         </div>
 
-        <div style="padding: 1rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
-          <h4 style="font-size: 0.92rem; margin-bottom: 0.25rem;">3. Eye Blink Ratio & Duplicate Hashing</h4>
-          <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
-            Identifies mid-blink closed eyes and applies perceptual hashing to detect duplicate burst sequences.
+        <div style="padding: 1rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-canvas);">
+          <h4 style="font-size: 0.86rem; font-weight: 700; margin-bottom: 0.35rem;">3. Haar Cascade Facial Landmark & Blink Detection</h4>
+          <p style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">
+            Applies frontal face Haar cascade classifiers to isolate subject faces, followed by eye-region cascade searches. If a clear face lacks detectable open eyes, the photo is penalized 20 points and flagged as "Closed Eyes / Blink".
+          </p>
+        </div>
+
+        <div style="padding: 1rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-canvas);">
+          <h4 style="font-size: 0.86rem; font-weight: 700; margin-bottom: 0.35rem;">4. 64-bit dHash Perceptual Hashing</h4>
+          <p style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">
+            Generates 64-bit difference hashes by scaling down images to 9x8 gradients. Sequences with a Hamming Distance &lt;= 8 are classified as burst duplicates, automatically grouping burst shots and isolating the single sharpest hero frame.
+          </p>
+        </div>
+
+        <div style="padding: 1rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-canvas);">
+          <h4 style="font-size: 0.86rem; font-weight: 700; margin-bottom: 0.35rem;">5. Dual-Tier WebP Compressive Storage</h4>
+          <p style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">
+            To fit within MongoDB Atlas's 512 MB free tier quota, images are encoded into 1600px display WebP (82% quality) and 400px thumbnail WebP (70% quality), slashing typical 8 MB image footprints by 95% down to ~150 KB.
+          </p>
+        </div>
+
+        <div style="padding: 1rem; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-canvas);">
+          <h4 style="font-size: 0.86rem; font-weight: 700; margin-bottom: 0.35rem;">6. Lightroom-Style Keyboard Shortcuts</h4>
+          <p style="font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">
+            Accelerate manual review without leaving the keyboard:<br>
+            • <strong>1</strong> or <strong>S</strong>: Mark Select<br>
+            • <strong>2</strong> or <strong>R</strong>: Mark Review<br>
+            • <strong>3</strong> or <strong>X</strong>: Mark Poor<br>
+            • <strong>Arrow Left / Right</strong>: Next / Prev Image<br>
+            • <strong>Spacebar</strong>: Toggle Inspection Modal<br>
+            • <strong>Delete / Backspace</strong>: Trigger Custom Delete
           </p>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- DETAIL INSPECTION MODAL WITH CLIPPING MASK & COMPOSITION GRID -->
   <div class="modal-overlay" id="inspectModal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-image-pane">
-        <img id="modalImg" src="" alt="Inspection">
+        <img id="modalImg" src="" alt="Inspection" crossorigin="anonymous">
+        <!-- Interactive Canvas for Highlighting Over/Underexposure -->
+        <canvas id="clippingCanvas"></canvas>
+        <!-- Interactive 3x3 Composition Overlay -->
+        <div class="rule-of-thirds-grid" id="ruleOfThirdsGrid">
+          <div></div><div></div><div></div>
+          <div></div><div></div><div></div>
+          <div></div><div></div><div></div>
+        </div>
       </div>
       <div class="modal-details">
         <div class="modal-header">
           <div>
-            <h3 id="modalFilename" style="font-size: 1rem; font-weight: 700;">IMG_001.JPG</h3>
-            <p id="modalCategory" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase;"></p>
+            <h3 id="modalFilename" style="font-size: 0.95rem; font-weight: 700;">IMG_001.JPG</h3>
+            <p id="modalCategory" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase;"></p>
           </div>
           <button class="modal-close-btn" onclick="closeModal()">&times;</button>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Mask & Grid Toggles -->
+        <div style="display: flex; gap: 0.4rem;">
+          <button class="btn btn-secondary" style="flex: 1; font-size: 0.72rem;" onclick="toggleClippingMask()">Clipping Mask</button>
+          <button class="btn btn-secondary" style="flex: 1; font-size: 0.72rem;" onclick="toggleRuleOfThirds()">Grid Overlay</button>
+        </div>
+
+        <!-- Dynamic Quality Diagnostic Gauges -->
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
           <div class="analysis-meter">
             <div class="meter-label">
               <span>Overall Quality Score</span>
               <strong id="modalScoreVal">88/100</strong>
             </div>
-            <div class="meter-bar">
-              <div id="modalScoreBar" class="meter-fill" style="width: 88%;"></div>
-            </div>
+            <div class="meter-bar"><div id="modalScoreBar" class="meter-fill" style="width: 88%;"></div></div>
           </div>
 
           <div class="analysis-meter">
@@ -734,9 +1265,7 @@
               <span>Laplacian Sharpness</span>
               <strong id="modalSharpVal">160</strong>
             </div>
-            <div class="meter-bar">
-              <div id="modalSharpBar" class="meter-fill" style="width: 75%; background: #06B6D4;"></div>
-            </div>
+            <div class="meter-bar"><div id="modalSharpBar" class="meter-fill" style="width: 75%; background: #06B6D4;"></div></div>
           </div>
 
           <div class="analysis-meter">
@@ -744,29 +1273,51 @@
               <span>Exposure Level</span>
               <strong id="modalExposureVal">128</strong>
             </div>
-            <div class="meter-bar">
-              <div id="modalExposureBar" class="meter-fill" style="width: 60%; background: #8B5CF6;"></div>
-            </div>
+            <div class="meter-bar"><div id="modalExposureBar" class="meter-fill" style="width: 60%; background: #8B5CF6;"></div></div>
           </div>
+        </div>
+
+        <!-- EXIF & Facial Stats -->
+        <div style="background: var(--bg-subtle); padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.72rem; display: flex; flex-direction: column; gap: 0.25rem;">
+          <div>Camera: <strong id="modalCamera">-</strong></div>
+          <div>Settings: <strong id="modalExifSettings">-</strong></div>
+          <div>Faces Detected: <strong id="modalFaceCount">0</strong></div>
         </div>
 
         <div>
-          <span style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 0.4rem;">Quality Diagnoses:</span>
-          <div id="modalIssues" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
+          <span style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.35rem;">Quality Diagnoses:</span>
+          <div id="modalIssues" style="display: flex; gap: 0.35rem; flex-wrap: wrap;"></div>
         </div>
 
-        <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
-          <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Override Category:</span>
-          <div style="display: flex; gap: 0.5rem;">
-            <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="overrideModalPhoto('good')">Select</button>
-            <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="overrideModalPhoto('review')">Review</button>
-            <button class="btn btn-secondary" style="flex: 1; justify-content: center;" onclick="overrideModalPhoto('poor')">Poor</button>
+        <!-- Manual Override & Action Buttons -->
+        <div style="margin-top: auto; padding-top: 0.85rem; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 0.6rem;">
+          <span style="font-size: 0.72rem; color: var(--text-secondary); display: block;">Override Category:</span>
+          <div style="display: flex; gap: 0.4rem;">
+            <button class="btn btn-secondary" style="flex: 1;" onclick="overrideModalPhoto('good')">Select</button>
+            <button class="btn btn-secondary" style="flex: 1;" onclick="overrideModalPhoto('review')">Review</button>
+            <button class="btn btn-secondary" style="flex: 1;" onclick="overrideModalPhoto('poor')">Poor</button>
           </div>
+          <button class="btn btn-danger" style="width: 100%; margin-top: 0.25rem;" onclick="promptSingleDelete(inspectedPhotoId)">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            Delete from Database
+          </button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- SIDE-BY-SIDE COMPARISON MODAL -->
+  <div class="modal-overlay" id="compareModal" onclick="closeCompareModal()">
+    <div class="compare-content" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 1.1rem; font-weight: 700;">Side-by-Side Photo Comparison</h3>
+        <button class="modal-close-btn" onclick="closeCompareModal()">&times;</button>
+      </div>
+      <div class="compare-grid" id="compareGrid"></div>
+    </div>
+  </div>
+
+  <!-- FLOATING NAVIGATION DOCK -->
   <nav class="bottom-dock">
     <button class="dock-tab active" onclick="switchView('uploadView', this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -776,52 +1327,202 @@
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
       <span>Workspace</span>
     </button>
+    <button class="dock-tab" onclick="switchView('statsView', this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span>Stats</span>
+    </button>
     <button class="dock-tab" onclick="switchView('methodologyView', this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
       <span>Specs</span>
     </button>
   </nav>
 
+  <!-- JAVASCRIPT APPLICATION ENGINE -->
   <script>
-    const BACKEND_URL = "https://photo-sort-backend.onrender.com";
+    // =========================================================================
+    // UNIVERSAL ENVIRONMENT ROUTING
+    // Automatically targets local uvicorn on localhost/127.0.0.1, and switches
+    // to your deployed Render backend when hosted on GitHub Pages.
+    // =========================================================================
+    const BACKEND_URL = (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.protocol === "file:"
+    ) ? "http://127.0.0.1:8000" : "https://photo-sort-backend.onrender.com";
 
-    let photoLibrary = [];
-    let currentFilter = 'all';
-    let inspectedPhotoId = null;
+    // Global Client State Management
+    let photoLibrary = [];                 // Array of photos loaded from backend
+    let currentFilter = 'all';             // Filter pill status: all, good, review, poor, duplicates
+    let currentSort = 'newest';            // Sort selection
+    let inspectedPhotoId = null;           // Currently active photo inside inspection modal
+    let selectedPhotoIds = new Set();      // Set of photo IDs checked for batch operations
+    let pendingDeleteType = null;          // 'single' or 'batch'
+    let pendingDeleteTargetId = null;      // Target ID for single deletion confirmation
 
-    // Load previously saved photos from MongoDB Atlas on start
-    window.addEventListener('DOMContentLoaded', loadPhotosFromAtlas);
+    // App Initialization Hook
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPhotosFromAtlas();
+      loadBackendStats();
+      setupKeyboardShortcuts();
+    });
 
+    // =========================================================================
+    // KEYBOARD SHORTCUTS CONTROLLER (LIGHTROOM-STYLE CULLING)
+    // =========================================================================
+    function setupKeyboardShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        // Prevent hotkeys while typing inside inputs or select menus
+        if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+        const key = e.key.toLowerCase();
+
+        // 1 or S -> Classify as Good / Select
+        if (key === '1' || key === 's') {
+          if (inspectedPhotoId) overrideModalPhoto('good');
+        } 
+        // 2 or R -> Classify as Needs Review
+        else if (key === '2' || key === 'r') {
+          if (inspectedPhotoId) overrideModalPhoto('review');
+        } 
+        // 3 or X -> Classify as Poor Quality
+        else if (key === '3' || key === 'x') {
+          if (inspectedPhotoId) overrideModalPhoto('poor');
+        } 
+        // Spacebar -> Toggle Full-screen Inspection Modal
+        else if (e.code === 'Space') {
+          e.preventDefault();
+          if (inspectedPhotoId) {
+            closeModal();
+          } else if (photoLibrary.length > 0) {
+            openInspection(photoLibrary[0].id);
+          }
+        } 
+        // Right Arrow -> Next photo in inspection modal
+        else if (key === 'arrowright') {
+          navigateModal(1);
+        } 
+        // Left Arrow -> Previous photo in inspection modal
+        else if (key === 'arrowleft') {
+          navigateModal(-1);
+        } 
+        // Delete or Backspace -> Trigger custom deletion modal
+        else if (key === 'delete' || key === 'backspace') {
+          if (inspectedPhotoId) {
+            promptSingleDelete(inspectedPhotoId);
+          } else if (selectedPhotoIds.size > 0) {
+            promptBatchDelete();
+          }
+        }
+      });
+    }
+
+    function navigateModal(direction) {
+      if (!inspectedPhotoId) return;
+      const filtered = getFilteredPhotos();
+      const idx = filtered.findIndex(p => p.id === inspectedPhotoId);
+      if (idx === -1) return;
+      const nextIdx = idx + direction;
+      if (nextIdx >= 0 && nextIdx < filtered.length) {
+        openInspection(filtered[nextIdx].id);
+      }
+    }
+
+    // =========================================================================
+    // API SYNC: LOAD PHOTOS & CLOUD DATABASE METRICS
+    // =========================================================================
     async function loadPhotosFromAtlas() {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/photos`);
+        const res = await fetch(`${BACKEND_URL}/api/photos?sort=${currentSort}`);
         if (!res.ok) return;
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           photoLibrary = data.map(item => ({
             id: item.id,
             filename: item.filename,
-            src: item.image_data, // Pulling base64 image data stored in MongoDB
+            src: item.image_data,
+            thumb: item.thumb_data || item.image_data,
             score: item.score,
             category: item.category,
             sharpness: item.sharpness,
             exposure: item.exposure,
-            issues: item.issues
+            issues: item.issues || [],
+            is_duplicate: item.is_duplicate || false,
+            exif: item.exif || {},
+            face_count: item.face_count || 0
           }));
           updateGalleryUI();
+
+          // Switch automatically to the Workspace view when stored photos exist
+          const workspaceTab = document.querySelectorAll('.dock-tab')[1];
+          switchView('cullingView', workspaceTab);
         }
       } catch (err) {
         console.warn("Could not load photos from Atlas:", err);
       }
     }
 
+    async function loadBackendStats() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/stats`);
+        if (!res.ok) return;
+        const stats = await res.json();
+
+        // 1. Update High-Contrast Storage Bar (Grey track = Free, Blue bar = Used)
+        const storage = stats.storage;
+        document.getElementById('storageLabelUsed').innerText = `${storage.used_mb} MB / ${storage.limit_mb} MB (${storage.used_percent}%)`;
+        document.getElementById('storageUsedMbText').innerText = `${storage.used_mb} MB`;
+        document.getElementById('storageRemainingMbText').innerText = `${storage.remaining_mb} MB Free`;
+        
+        const meter = document.getElementById('storageMeterFill');
+        // Ensure even tiny usage (e.g. 0.04%) displays with a minimum width for visibility
+        const displayWidth = storage.used_mb > 0 ? Math.max(1.2, storage.used_percent) : 0;
+        meter.style.width = Math.min(100, displayWidth) + '%';
+        meter.style.background = storage.used_percent > 85 ? 'var(--poor-color)' : storage.used_percent > 65 ? 'var(--review-color)' : '#2563EB';
+
+        // 2. Update Classification Distribution
+        const counts = stats.counts;
+        const total = counts.total || 1;
+        const gPct = Math.round((counts.good / total) * 100);
+        const rPct = Math.round((counts.review / total) * 100);
+        const pPct = Math.round((counts.poor / total) * 100);
+
+        document.getElementById('statGoodPercent').innerText = `${counts.good} (${gPct}%)`;
+        document.getElementById('statReviewPercent').innerText = `${counts.review} (${rPct}%)`;
+        document.getElementById('statPoorPercent').innerText = `${counts.poor} (${pPct}%)`;
+
+        document.getElementById('statGoodBar').style.width = gPct + '%';
+        document.getElementById('statReviewBar').style.width = rPct + '%';
+        document.getElementById('statPoorBar').style.width = pPct + '%';
+
+        // 3. Update Quality Benchmarks
+        const avg = stats.averages;
+        document.getElementById('statAvgScore').innerText = `${avg.score} / 100`;
+        document.getElementById('statAvgSharpness').innerText = avg.sharpness;
+        document.getElementById('statAvgExposure').innerText = `${avg.exposure} Lum`;
+        document.getElementById('statAvgFileSize').innerText = `${avg.file_size_kb} KB`;
+      } catch (err) {
+        console.warn("Could not retrieve backend stats:", err);
+      }
+    }
+
+    // =========================================================================
+    // VIEW NAVIGATION CONTROLLER
+    // =========================================================================
     function switchView(viewId, element) {
       document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
       document.querySelectorAll('.dock-tab').forEach(t => t.classList.remove('active'));
       document.getElementById(viewId).classList.add('active');
       element.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (viewId === 'statsView') {
+        loadBackendStats();
+      }
     }
 
+    // =========================================================================
+    // DRAG-AND-DROP & MULTI-FILE UPLOAD PIPELINE
+    // =========================================================================
     const dropArea = document.getElementById('dropArea');
     ['dragenter', 'dragover'].forEach(name => {
       dropArea.addEventListener(name, (e) => { e.preventDefault(); dropArea.classList.add('drag-over'); });
@@ -839,11 +1540,29 @@
     }
 
     async function processFiles(fileList) {
-      showToast('Processing ' + fileList.length + ' photos to MongoDB Atlas...');
-      
-      for (const file of Array.from(fileList)) {
-        if (!file.type.startsWith('image/')) continue;
+      const validFiles = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+      if (!validFiles.length) {
+        showToast("No valid image files selected.");
+        return;
+      }
 
+      const total = validFiles.length;
+      const progressModal = document.getElementById('uploadProgressModal');
+      const progressBar = document.getElementById('uploadProgressBar');
+      const progressCount = document.getElementById('uploadProgressCount');
+      const progressPercent = document.getElementById('uploadProgressPercent');
+      const modalSub = document.getElementById('uploadModalSub');
+
+      // Lock UI with persistent upload popup
+      progressModal.classList.add('active');
+      progressBar.style.width = '0%';
+      progressCount.innerText = `0 / ${total} images`;
+      progressPercent.innerText = '0%';
+
+      for (let i = 0; i < total; i++) {
+        const file = validFiles[i];
+        modalSub.innerText = `Processing (${i + 1}/${total}): ${file.name}`;
+        
         const formData = new FormData();
         formData.append("file", file);
 
@@ -859,51 +1578,260 @@
           }
 
           const data = await res.json();
-
           photoLibrary.unshift({
             id: data.id,
             filename: data.filename,
-            src: data.image_data, // Uses the exact image stored in MongoDB
+            src: data.image_data,
+            thumb: data.thumb_data || data.image_data,
             score: data.score,
             category: data.category,
             sharpness: data.sharpness,
             exposure: data.exposure,
-            issues: data.issues
+            issues: data.issues || [],
+            is_duplicate: data.is_duplicate || false,
+            exif: data.exif || {},
+            face_count: data.face_count || 0
           });
         } catch (err) {
           console.error("Backend error:", err);
-          showToast(err.message || "Failed to analyze: " + file.name);
+          showToast(`Error on ${file.name}: ${err.message}`);
+        }
+
+        const pct = Math.round(((i + 1) / total) * 100);
+        progressBar.style.width = `${pct}%`;
+        progressCount.innerText = `${i + 1} / ${total} images`;
+        progressPercent.innerText = `${pct}%`;
+      }
+
+      modalSub.innerText = "All images successfully committed to MongoDB Atlas!";
+      setTimeout(() => {
+        progressModal.classList.remove('active');
+        updateGalleryUI();
+        loadBackendStats();
+        const workspaceTab = document.querySelectorAll('.dock-tab')[1];
+        switchView('cullingView', workspaceTab);
+        showToast(`Saved ${total} image(s) to MongoDB Atlas.`);
+      }, 500);
+    }
+
+    // =========================================================================
+    // CUSTOM ANIMATED DELETION CONTROLLER
+    // =========================================================================
+    function promptSingleDelete(id, event) {
+      if (event) event.stopPropagation();
+      pendingDeleteType = 'single';
+      pendingDeleteTargetId = id;
+
+      const photo = photoLibrary.find(p => p.id === id);
+      document.getElementById('confirmModalTitle').innerText = 'Delete Photograph?';
+      document.getElementById('confirmModalMessage').innerText = photo 
+        ? `Are you sure you want to permanently delete "${photo.filename}" from MongoDB Atlas?`
+        : 'Are you sure you want to delete this photo from MongoDB Atlas?';
+
+      document.getElementById('confirmDeleteModal').classList.add('active');
+    }
+
+    function promptBatchDelete() {
+      if (selectedPhotoIds.size === 0) return;
+      pendingDeleteType = 'batch';
+      pendingDeleteTargetId = null;
+
+      document.getElementById('confirmModalTitle').innerText = `Delete ${selectedPhotoIds.size} Photographs?`;
+      document.getElementById('confirmModalMessage').innerText = `Are you sure you want to permanently delete all ${selectedPhotoIds.size} selected photographs from MongoDB Atlas?`;
+
+      document.getElementById('confirmDeleteModal').classList.add('active');
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmDeleteModal').classList.remove('active');
+      pendingDeleteType = null;
+      pendingDeleteTargetId = null;
+    }
+
+    async function executeConfirmedDelete() {
+      const deleteModal = document.getElementById('confirmDeleteModal');
+      deleteModal.classList.remove('active');
+
+      if (pendingDeleteType === 'single' && pendingDeleteTargetId) {
+        const id = pendingDeleteTargetId;
+        if (!id.startsWith('demo_')) {
+          try {
+            const res = await fetch(`${BACKEND_URL}/api/photos/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Delete request failed");
+          } catch (err) {
+            showToast("Failed to delete photo from database.");
+            return;
+          }
+        }
+        photoLibrary = photoLibrary.filter(p => p.id !== id);
+        selectedPhotoIds.delete(id);
+        if (inspectedPhotoId === id) closeModal();
+        showToast("Photograph deleted successfully.");
+      } else if (pendingDeleteType === 'batch') {
+        const ids = Array.from(selectedPhotoIds);
+        const serverIds = ids.filter(id => !id.startsWith('demo_'));
+        
+        if (serverIds.length > 0) {
+          try {
+            const res = await fetch(`${BACKEND_URL}/api/photos/batch-delete`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ids: serverIds })
+            });
+            if (!res.ok) throw new Error("Batch delete failed");
+          } catch (err) {
+            showToast("Batch delete error.");
+            return;
+          }
+        }
+        photoLibrary = photoLibrary.filter(p => !selectedPhotoIds.has(p.id));
+        selectedPhotoIds.clear();
+        showToast(`Deleted ${ids.length} photographs.`);
+      }
+
+      updateGalleryUI();
+      loadBackendStats();
+    }
+
+    // =========================================================================
+    // BATCH SELECTION & BULK ACTIONS
+    // =========================================================================
+    function toggleSelectPhoto(id, event) {
+      if (event) event.stopPropagation();
+      if (selectedPhotoIds.has(id)) {
+        selectedPhotoIds.delete(id);
+      } else {
+        selectedPhotoIds.add(id);
+      }
+      updateBatchBar();
+      updateCardSelectionStates();
+    }
+
+    function updateBatchBar() {
+      const bar = document.getElementById('batchActionBar');
+      const tag = document.getElementById('batchCountTag');
+      const compareBtn = document.getElementById('compareBatchBtn');
+
+      const count = selectedPhotoIds.size;
+      if (count > 0) {
+        tag.innerText = `${count} Selected`;
+        bar.classList.add('visible');
+        // Show compare button only when exactly two photos are selected
+        compareBtn.style.display = count === 2 ? 'inline-flex' : 'none';
+      } else {
+        bar.classList.remove('visible');
+      }
+    }
+
+    function updateCardSelectionStates() {
+      document.querySelectorAll('.photo-card').forEach(card => {
+        const id = card.getAttribute('data-id');
+        card.classList.toggle('selected', selectedPhotoIds.has(id));
+      });
+    }
+
+    function clearBatchSelection() {
+      selectedPhotoIds.clear();
+      updateBatchBar();
+      updateCardSelectionStates();
+    }
+
+    async function batchSetClassification(category) {
+      const ids = Array.from(selectedPhotoIds);
+      if (!ids.length) return;
+
+      ids.forEach(id => {
+        const item = photoLibrary.find(p => p.id === id);
+        if (item) item.category = category;
+      });
+
+      const serverIds = ids.filter(id => !id.startsWith('demo_'));
+      if (serverIds.length > 0) {
+        try {
+          await fetch(`${BACKEND_URL}/api/photos/batch-category`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: serverIds, category })
+          });
+        } catch (err) {
+          console.warn("Batch category sync error:", err);
         }
       }
 
+      clearBatchSelection();
       updateGalleryUI();
-      const workspaceTab = document.querySelectorAll('.dock-tab')[1];
-      switchView('cullingView', workspaceTab);
+      loadBackendStats();
+      showToast(`Moved ${ids.length} photos to ${category.toUpperCase()}`);
     }
 
-    async function demoLoadPhotos() {
-      const demoSamples = [
-        { name: "Event_Portrait_Sharp.jpg", url: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80", score: 92, category: 'good', sharpness: 185, exposure: 124, issues: ["Sharp Focus", "Balanced Exposure"] },
-        { name: "Motion_Blur_LowLight.jpg", url: "https://images.unsplash.com/photo-1545232979-fbf68fe9f8a8?w=600&auto=format&fit=crop&q=40", score: 38, category: 'poor', sharpness: 22, exposure: 41, issues: ["Out of Focus", "Underexposed"] },
-        { name: "Reception_HighContrast.jpg", url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&auto=format&fit=crop&q=80", score: 68, category: 'review', sharpness: 88, exposure: 218, issues: ["Blown Highlights"] }
-      ];
-
-      showToast("Loading demo photos...");
-      for (const sample of demoSamples) {
-        photoLibrary.push({
-          id: 'demo_' + Math.random().toString(36).substr(2, 9),
-          filename: sample.name,
-          src: sample.url,
-          score: sample.score,
-          category: sample.category,
-          sharpness: sample.sharpness,
-          exposure: sample.exposure,
-          issues: sample.issues
-        });
+    // =========================================================================
+    // SIDE-BY-SIDE PHOTO COMPARISON
+    // =========================================================================
+    function openSideBySideCompare() {
+      const ids = Array.from(selectedPhotoIds);
+      if (ids.length !== 2) {
+        showToast("Select exactly 2 photos to compare!");
+        return;
       }
+
+      const p1 = photoLibrary.find(p => p.id === ids[0]);
+      const p2 = photoLibrary.find(p => p.id === ids[1]);
+      if (!p1 || !p2) return;
+
+      const grid = document.getElementById('compareGrid');
+      grid.innerHTML = [p1, p2].map((p, idx) => `
+        <div class="compare-pane">
+          <div class="compare-img-box">
+            <img src="${p.src}" alt="${p.filename}">
+          </div>
+          <div class="compare-meta">
+            <h4 style="font-size: 0.88rem; font-weight: 700;">${p.filename}</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; font-size: 0.75rem;">
+              <div>Quality Score: <strong>${p.score}/100</strong></div>
+              <div>Sharpness: <strong>${p.sharpness}</strong></div>
+              <div>Exposure: <strong>${p.exposure} Lum</strong></div>
+              <div>Category: <strong style="text-transform: uppercase;">${p.category}</strong></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top: 0.5rem;" onclick="pickCompareWinner('${p.id}', '${idx === 0 ? p2.id : p1.id}')">
+              Pick as Hero Selection
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('compareModal').classList.add('active');
+    }
+
+    function pickCompareWinner(winnerId, loserId) {
+      setClassification(winnerId, 'good');
+      setClassification(loserId, 'review');
+      closeCompareModal();
+      clearBatchSelection();
+      showToast("Hero pick designated!");
+    }
+
+    function closeCompareModal() {
+      document.getElementById('compareModal').classList.remove('active');
+    }
+
+    // =========================================================================
+    // GALLERY RENDERING, CATEGORY FILTERING & SORTING
+    // =========================================================================
+    function getFilteredPhotos() {
+      if (currentFilter === 'duplicates') {
+        return photoLibrary.filter(p => p.is_duplicate || (p.issues && p.issues.includes("Burst Duplicate")));
+      }
+      return currentFilter === 'all' 
+        ? photoLibrary 
+        : photoLibrary.filter(p => p.category === currentFilter);
+    }
+
+    function handleSortChange(sortVal) {
+      currentSort = sortVal;
+      if (sortVal === 'newest') photoLibrary.reverse();
+      else if (sortVal === 'score_desc') photoLibrary.sort((a, b) => b.score - a.score);
+      else if (sortVal === 'sharpness_desc') photoLibrary.sort((a, b) => b.sharpness - a.sharpness);
       updateGalleryUI();
-      const workspaceTab = document.querySelectorAll('.dock-tab')[1];
-      switchView('cullingView', workspaceTab);
     }
 
     function updateGalleryUI() {
@@ -914,6 +1842,7 @@
       const goodCount = photoLibrary.filter(p => p.category === 'good').length;
       const reviewCount = photoLibrary.filter(p => p.category === 'review').length;
       const poorCount = photoLibrary.filter(p => p.category === 'poor').length;
+      const dupCount = photoLibrary.filter(p => p.is_duplicate || (p.issues && p.issues.includes("Burst Duplicate"))).length;
 
       document.getElementById('statTotal').innerText = total;
       document.getElementById('statGood').innerText = goodCount;
@@ -924,10 +1853,9 @@
       document.getElementById('pillGoodCount').innerText = goodCount;
       document.getElementById('pillReviewCount').innerText = reviewCount;
       document.getElementById('pillPoorCount').innerText = poorCount;
+      document.getElementById('pillDupCount').innerText = dupCount;
 
-      const filtered = currentFilter === 'all' 
-        ? photoLibrary 
-        : photoLibrary.filter(p => p.category === currentFilter);
+      const filtered = getFilteredPhotos();
 
       gallery.innerHTML = '';
       if (!filtered.length) {
@@ -938,34 +1866,44 @@
 
       filtered.forEach(photo => {
         const card = document.createElement('div');
-        card.className = 'photo-card';
+        card.className = 'photo-card' + (selectedPhotoIds.has(photo.id) ? ' selected' : '');
+        card.setAttribute('data-id', photo.id);
 
         let badgeClass = 'score-good';
         if (photo.category === 'review') badgeClass = 'score-review';
         if (photo.category === 'poor') badgeClass = 'score-poor';
 
         const flagsHtml = (photo.issues || []).map(iss => {
-          const isAlert = iss.includes('Focus') || iss.includes('Underexposed') || iss.includes('Blown');
-          return '<span class="flag-tag ' + (isAlert ? 'alert' : '') + '">' + iss + '</span>';
+          const isAlert = iss.includes('Focus') || iss.includes('Underexposed') || iss.includes('Blown') || iss.includes('Eyes');
+          const isDup = iss.includes('Duplicate');
+          return `<span class="flag-tag ${isAlert ? 'alert' : ''} ${isDup ? 'duplicate' : ''}">${iss}</span>`;
         }).join('');
 
-        card.innerHTML = 
-          '<div class="photo-thumb-wrap" onclick="openInspection(\'' + photo.id + '\')">' +
-            '<img src="' + photo.src + '" alt="' + photo.filename + '" loading="lazy">' +
-            '<div class="score-badge ' + badgeClass + '">' + photo.score + ' Score</div>' +
-          '</div>' +
-          '<div class="photo-meta">' +
-            '<div class="meta-title">' + photo.filename + '</div>' +
-            '<div class="flags-row">' + flagsHtml + '</div>' +
-          '</div>' +
-          '<div class="card-actions">' +
-            '<button class="card-action-btn ' + (photo.category === 'good' ? 'selected-good' : '') + '" onclick="setClassification(\'' + photo.id + '\', \'good\')">Select</button>' +
-            '<button class="card-action-btn ' + (photo.category === 'review' ? 'selected-review' : '') + '" onclick="setClassification(\'' + photo.id + '\', \'review\')">Review</button>' +
-            '<button class="card-action-btn ' + (photo.category === 'poor' ? 'selected-poor' : '') + '" onclick="setClassification(\'' + photo.id + '\', \'poor\')">Poor</button>' +
-          '</div>';
+        card.innerHTML = `
+          <div class="card-checkbox" onclick="toggleSelectPhoto('${photo.id}', event)">
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <button class="card-delete-icon-btn" onclick="promptSingleDelete('${photo.id}', event)" title="Delete Photo">
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+          <div class="photo-thumb-wrap" onclick="openInspection('${photo.id}')">
+            <img src="${photo.thumb}" alt="${photo.filename}" loading="lazy">
+            <div class="score-badge ${badgeClass}">${photo.score} Score</div>
+          </div>
+          <div class="photo-meta">
+            <div class="meta-title">${photo.filename}</div>
+            <div class="flags-row">${flagsHtml}</div>
+          </div>
+          <div class="card-actions">
+            <button class="card-action-btn ${photo.category === 'good' ? 'selected-good' : ''}" onclick="setClassification('${photo.id}', 'good')">Select</button>
+            <button class="card-action-btn ${photo.category === 'review' ? 'selected-review' : ''}" onclick="setClassification('${photo.id}', 'review')">Review</button>
+            <button class="card-action-btn ${photo.category === 'poor' ? 'selected-poor' : ''}" onclick="setClassification('${photo.id}', 'poor')">Poor</button>
+          </div>`;
 
         gallery.appendChild(card);
       });
+
+      updateBatchBar();
     }
 
     function setCategoryFilter(filter) {
@@ -990,19 +1928,27 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ category: newCat })
             });
+            loadBackendStats();
           } catch (err) {
-            console.warn('Failed to sync classification to MongoDB Atlas:', err);
+            console.warn('Failed to sync classification:', err);
           }
         }
       }
     }
+
+    // =========================================================================
+    // INSPECTION MODAL, EXPOSURE CLIPPING MASK & COMPOSITION GRID
+    // =========================================================================
+    let clippingMaskActive = false;
+    let gridOverlayActive = false;
 
     function openInspection(id) {
       const photo = photoLibrary.find(p => p.id === id);
       if (!photo) return;
       inspectedPhotoId = id;
 
-      document.getElementById('modalImg').src = photo.src;
+      const modalImg = document.getElementById('modalImg');
+      modalImg.src = photo.src;
       document.getElementById('modalFilename').innerText = photo.filename;
       
       const catEl = document.getElementById('modalCategory');
@@ -1019,19 +1965,79 @@
       document.getElementById('modalExposureVal').innerText = photo.exposure + ' Lum';
       document.getElementById('modalExposureBar').style.width = Math.round((photo.exposure / 255) * 100) + '%';
 
+      const exif = photo.exif || {};
+      document.getElementById('modalCamera').innerText = exif.camera || 'Standard Camera';
+      document.getElementById('modalExifSettings').innerText = `${exif.f_stop || 'f/2.8'} • ${exif.shutter || '1/250s'} • ${exif.iso || 'ISO 200'}`;
+      document.getElementById('modalFaceCount').innerText = photo.face_count || 0;
+
       const issuesEl = document.getElementById('modalIssues');
       issuesEl.innerHTML = (photo.issues || []).map(iss => {
-        const isAlert = iss.includes('Focus') || iss.includes('Underexposed');
-        return '<span class="flag-tag ' + (isAlert ? 'alert' : '') + '">' + iss + '</span>';
+        const isAlert = iss.includes('Focus') || iss.includes('Underexposed') || iss.includes('Blown') || iss.includes('Eyes');
+        const isDup = iss.includes('Duplicate');
+        return `<span class="flag-tag ${isAlert ? 'alert' : ''} ${isDup ? 'duplicate' : ''}">${iss}</span>`;
       }).join('');
 
+      // Reset overlays when opening a new photograph
+      clippingMaskActive = false;
+      document.getElementById('clippingCanvas').classList.remove('active');
+      gridOverlayActive = false;
+      document.getElementById('ruleOfThirdsGrid').classList.remove('active');
+
       document.getElementById('inspectModal').classList.add('active');
+    }
+
+    function toggleClippingMask() {
+      clippingMaskActive = !clippingMaskActive;
+      const canvas = document.getElementById('clippingCanvas');
+      const img = document.getElementById('modalImg');
+
+      if (!clippingMaskActive) {
+        canvas.classList.remove('active');
+        return;
+      }
+
+      // Draw the image pixels to canvas to inspect luminance byte by byte
+      canvas.width = img.naturalWidth || img.clientWidth;
+      canvas.height = img.naturalHeight || img.clientHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i], g = data[i+1], b = data[i+2];
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        // Highlight clipped blown whites (>245) in solid RED
+        if (lum > 245) {
+          data[i] = 255; data[i+1] = 0; data[i+2] = 0; data[i+3] = 220;
+        } 
+        // Highlight crushed underexposed shadows (<15) in solid BLUE
+        else if (lum < 15) {
+          data[i] = 0; data[i+1] = 100; data[i+2] = 255; data[i+3] = 220;
+        } 
+        // Leave normal tones completely transparent
+        else {
+          data[i+3] = 0;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      canvas.classList.add('active');
+    }
+
+    function toggleRuleOfThirds() {
+      gridOverlayActive = !gridOverlayActive;
+      document.getElementById('ruleOfThirdsGrid').classList.toggle('active', gridOverlayActive);
     }
 
     function overrideModalPhoto(category) {
       if (inspectedPhotoId) {
         setClassification(inspectedPhotoId, category);
-        closeModal();
+        const catEl = document.getElementById('modalCategory');
+        catEl.innerText = category.toUpperCase();
+        catEl.style.color = category === 'good' ? 'var(--good-color)' : category === 'review' ? 'var(--review-color)' : 'var(--poor-color)';
       }
     }
 
@@ -1040,21 +2046,77 @@
       inspectedPhotoId = null;
     }
 
-    function exportSelects() {
+    // =========================================================================
+    // CLIENT-SIDE ZIP PACKAGE ARCHIVING (JSZip + FileSaver)
+    // =========================================================================
+    async function exportSelectsZip() {
       const selects = photoLibrary.filter(p => p.category === 'good');
       if (!selects.length) {
-        showToast("No photos in Good/Select category yet!");
+        showToast("No photos in Good/Select category to export!");
         return;
       }
-      showToast('Exporting ' + selects.length + ' curated photographs...');
-      const manifest = selects.map(s => `${s.filename} (Score: ${s.score}, Sharpness: ${s.sharpness}, Exposure: ${s.exposure})`).join('\n');
-      const blob = new Blob([manifest], { type: 'text/plain' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'PhotoSort_Selected_Batch.txt';
-      a.click();
+
+      showToast(`Building ZIP package of ${selects.length} curated images...`);
+      const zip = new JSZip();
+      const folder = zip.folder("PhotoSort_Selects");
+
+      for (let i = 0; i < selects.length; i++) {
+        const photo = selects[i];
+        try {
+          let base64Content = photo.src;
+          // Strip out the Data URL schema prefix to extract raw base64 data
+          if (base64Content.includes(',')) {
+            base64Content = base64Content.split(',')[1];
+          }
+          const cleanName = photo.filename.replace(/\.[^/.]+$/, "") + ".webp";
+          folder.file(cleanName, base64Content, { base64: true });
+        } catch (err) {
+          console.warn("Could not pack image into zip:", photo.filename);
+        }
+      }
+
+      // Generate the binary blob and prompt user download
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, "PhotoSort_Curated_Selects.zip");
+      showToast("ZIP archive downloaded successfully!");
     }
 
+    // =========================================================================
+    // DEMO DATASET LOADER
+    // =========================================================================
+    async function demoLoadPhotos() {
+      const demoSamples = [
+        { name: "Wedding_Portrait_Hero.jpg", url: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80", score: 95, category: 'good', sharpness: 195, exposure: 124, issues: ["Sharp Focus", "Balanced Exposure"] },
+        { name: "Burst_Frame_02_Dup.jpg", url: "https://images.unsplash.com/photo-1519741497674-611481863552?w=600&auto=format&fit=crop&q=80", score: 72, category: 'review', sharpness: 110, exposure: 125, issues: ["Soft Focus", "Burst Duplicate"], is_duplicate: true },
+        { name: "Night_Club_Motion_Blur.jpg", url: "https://images.unsplash.com/photo-1545232979-fbf68fe9f8a8?w=600&auto=format&fit=crop&q=40", score: 35, category: 'poor', sharpness: 22, exposure: 41, issues: ["Out of Focus", "Underexposed"] },
+        { name: "Group_Speech_Blink.jpg", url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&auto=format&fit=crop&q=80", score: 62, category: 'review', sharpness: 94, exposure: 218, issues: ["Closed Eyes / Blink", "Blown Highlights"] }
+      ];
+
+      showToast("Loading demo photos...");
+      for (const sample of demoSamples) {
+        photoLibrary.push({
+          id: 'demo_' + Math.random().toString(36).substr(2, 9),
+          filename: sample.name,
+          src: sample.url,
+          thumb: sample.url,
+          score: sample.score,
+          category: sample.category,
+          sharpness: sample.sharpness,
+          exposure: sample.exposure,
+          issues: sample.issues,
+          is_duplicate: sample.is_duplicate || false,
+          face_count: 1,
+          exif: { camera: "Sony A7 IV", f_stop: "f/1.8", shutter: "1/500s", iso: "ISO 400" }
+        });
+      }
+      updateGalleryUI();
+      const workspaceTab = document.querySelectorAll('.dock-tab')[1];
+      switchView('cullingView', workspaceTab);
+    }
+
+    // =========================================================================
+    // TOAST NOTIFICATION BANNER
+    // =========================================================================
     function showToast(msg) {
       const toast = document.getElementById('toast');
       toast.innerText = msg;
